@@ -6,7 +6,7 @@ Deploy the upstream [OmniVoice Web UI](https://github.com/k2-fsa/OmniVoice) with
 
 1. Open your **OmniVoice Web UI** template in [Runpod Templates](https://console.runpod.io/user/templates). The configured account template ID is `jewf3g5lqm`.
 2. Use `ghcr.io/sakondev/omnivoice-runpod:latest` as the container image. Leave the Docker command override empty. For a private GHCR package, select your GHCR registry credential with package read access.
-3. Use an NVIDIA GPU host supporting CUDA 12.8 or later. Keep the template's 30 GB container disk and 50 GB persistent mount at `/workspace`.
+3. Use an NVIDIA GPU host supporting CUDA 12.8 or later. Keep the template's 50 GB container disk and 50 GB persistent mount at `/workspace`.
 4. Optionally configure `HF_TOKEN` as described below.
 5. Deploy and wait for `Model loaded.` and the Gradio server URL. Open **Connect**, then the HTTP service on port **8001**.
 

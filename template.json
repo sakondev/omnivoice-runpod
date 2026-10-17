@@ -3,7 +3,7 @@
     "name": "OmniVoice Web UI",
     "image": "ghcr.io/sakondev/omnivoice-runpod:latest",
     "args": "",
-    "disk": 30,
+    "disk": 50,
     "mounts": {
       "persistent": {
         "size": 50,
