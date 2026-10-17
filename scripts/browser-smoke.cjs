@@ -175,6 +175,8 @@ async function run() {
   });
   await page.goto(origin.origin, { waitUntil: 'load' });
   await page.waitForFunction((count) => document.querySelector('#language')?.options.length === count, config.languages.length);
+  assert.equal(await page.locator('.phrase').count(),1,'A new script must start with one phrase');
+  assert.equal(await page.locator('.phrase-delete').isEnabled(),false,'The final phrase must remain');
   assert.equal(await page.locator('[data-id="1"] [data-tag]').count(), 13);
   await page.locator('#phrase-1').fill('ก่อน หลัง');
   await page.locator('#phrase-1').evaluate((el) => el.setSelectionRange(4, el.value.length));
@@ -183,14 +185,22 @@ async function run() {
   assert.equal((await page.locator('#phrase-1').inputValue()).replace('[laughter]', '').replace(/\s+/g, ' ').trim(), 'ก่อน หลัง');
   await page.locator('#language-search').fill('ไทย');
   await page.locator('#language').selectOption('Thai');
-  await page.locator('#phrase-2').focus();
+  await page.locator('#add-block').click();
+  await page.locator('.phrase textarea').last().fill('Second phrase to remove.');
   await page.locator('#language').selectOption('English');
+  await page.locator('#add-block').click();
+  await page.locator('.phrase textarea').last().fill('Third phrase to keep.');
+  await page.locator('#language').selectOption('English');
+  await page.locator('[data-id="2"] .phrase-delete').click();
+  assert.equal(await page.locator('.phrase').count(),2);
+  assert.equal(await page.locator('.phrase textarea').last().inputValue(),'Third phrase to keep.');
+  assert.equal(await page.locator('#language').inputValue(),'English','Deleting another phrase lost selected settings');
   await page.locator('#phrase-1').focus();
   assert.equal(await page.locator('#language').inputValue(), 'Thai');
   await page.locator('#add-block').click();
   await page.locator('#review').click();
-  assert.match(await page.locator('#review-error').innerText(), /4/);
-  await page.locator('#remove-block').click();
+  assert.match(await page.locator('#review-error').innerText(), /ช่วงที่ 3/);
+  await page.locator('.phrase-delete').last().click();
   await page.locator('#record-reference').click();
   await page.locator('#stop-recording').waitFor({ state: 'visible' });
   await page.locator('.voice-summary').click({force:true});
@@ -208,8 +218,8 @@ async function run() {
   if (!inference) assert.equal(await page.locator('#generate').isEnabled(), false);
   if (inference) {
     assert.ok(process.env.SMOKE_REFERENCE_FILE, 'Real clone smoke needs an audio file');
-    await page.locator('#phrase-3').focus(); await page.locator('#remove-block').click();
-    await page.locator('#phrase-2').focus(); await page.locator('#remove-block').click();
+    await page.locator('.phrase-delete').last().click();
+    assert.equal(await page.locator('.phrase-delete').isEnabled(),false);
     await page.locator('#phrase-1').fill('Hello, welcome to OmniVoice.');
     await page.locator('#language-search').fill('');
     await page.locator('#language').selectOption('English');
@@ -229,6 +239,16 @@ async function run() {
     await page.evaluate(() => document.fonts.ready);
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }));
     assert.ok(dimensions.content <= dimensions.viewport + 1, `${name} overflow: ${JSON.stringify(dimensions)}`);
+    for (const position of [0,0.5,1]) {
+      const action = await page.evaluate((position) => {
+        window.scrollTo(0,(document.documentElement.scrollHeight-innerHeight)*position);
+        const button=document.querySelector('#review'), box=button.getBoundingClientRect();
+        const hit=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+        return {visible:box.top>=0&&box.bottom<=innerHeight&&Boolean(hit?.closest('#review')),barHeight:document.querySelector('.editor-actions').getBoundingClientRect().height,reserved:parseFloat(getComputedStyle(document.body).paddingBottom)};
+      },position);
+      assert.ok(action.visible,`${name}: review action was inaccessible at scroll ${position}`);
+      assert.ok(action.reserved>=action.barHeight,`${name}: action bar covers the end of the page`);
+    }
     await page.screenshot({ path: path.join(outputDir, `${name}.png`), fullPage: true });
   }
   await page.setViewportSize({ width: 390, height: 844 });

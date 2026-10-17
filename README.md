@@ -18,9 +18,9 @@ The service has no login. Treat its public proxy URL as sensitive. Do not expose
 
 1. Expand **เสียงที่ใช้**. Upload reference audio, record with **อัดเสียงอ้างอิง**, or select **ออกแบบเสียง**. Microphone recording requires HTTPS or localhost, an available input device, and browser/OS permission. Stop recording before generating. The interface reports permission and device failures without pretending a recording succeeded.
 2. For cloning, enter the words spoken in the reference clip. If left blank, the default server uses Whisper to transcribe. This can take longer on the first request. If the server was started with `--no-asr`, a transcript is required.
-3. Edit the script in separate phrases. Select a phrase to set its language, whisper instruction, pitch instruction, speed, and following pause. The language selector contains the original upstream list plus Auto. Language selection is not translation.
+3. Start with one phrase. Use **เพิ่มช่วงเสียง** in the fixed bottom bar to add another. Use **ลบ** at a phrase's header to remove it. At least one phrase remains. Select a phrase to set its language, whisper instruction, pitch instruction, speed, and following pause. The language selector contains the original upstream list plus Auto. Language selection is not translation.
 4. Insert any of the13 documented nonverbal tags using the menu inside the text field. Tags, whisper, pitch and design gender are model instructions, not guaranteed acoustic transformations or arbitrary per-word emotion controls.
-5. Review the plan, then generate. Follow real phrase completion progress. Listen to the completed audio and download the combined PCM16 WAV.
+5. Use **ตรวจแผนการสร้าง** in the fixed bottom bar, then generate from the reviewed plan. Follow real phrase completion progress. Listen to the completed audio and download the combined PCM16 WAV.
 
 Each phrase is synthesized separately. Reference mode reuses one clone prompt across the script. Design mode is instruction-based and does not promise an identical speaker across independently generated phrases. Pauses are inserted between phrases by Studio, not sent as an emotion command. The final phrase does not add trailing silence.
 
