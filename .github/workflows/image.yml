@@ -65,6 +65,58 @@ jobs:
             --mount "type=bind,source=$GITHUB_WORKSPACE/scripts/smoke-image.py,target=/tmp/smoke-image.py,readonly" \
             --entrypoint python3 "$IMAGE" /tmp/smoke-image.py
 
+      - name: Install isolated browser smoke tooling
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-tools" --no-save --no-package-lock playwright@1.58.2
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_PATH=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            node "$RUNNER_TEMP/browser-tools/node_modules/playwright/cli.js" install chromium
+          fi
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout "$RUNNER_TEMP/smoke-key.pem" \
+            -out "$RUNNER_TEMP/smoke-cert.pem" \
+            -subj "/CN=localhost" -addext "subjectAltName=IP:127.0.0.1,DNS:localhost"
+
+      - name: Check real browser behind an HTTPS public proxy
+        timeout-minutes: 6
+        env:
+          IMAGE: ${{ steps.image.outputs.sha }}
+          NODE_PATH: ${{ runner.temp }}/browser-tools/node_modules
+          SMOKE_CERT_FILE: ${{ runner.temp }}/smoke-cert.pem
+          SMOKE_KEY_FILE: ${{ runner.temp }}/smoke-key.pem
+          SMOKE_OUTPUT_DIR: ${{ runner.temp }}/browser-smoke
+        run: |
+          container="omnivoice-browser-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          cleanup() {
+            status=$?
+            if [ "$status" -ne 0 ]; then
+              docker logs "$container" || true
+            fi
+            docker rm -f "$container" || true
+            exit "$status"
+          }
+          trap cleanup EXIT
+          docker run --detach --name "$container" \
+            -p 127.0.0.1:18001:8001 \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/scripts/smoke-image.py,target=/tmp/smoke-image.py,readonly" \
+            -e GRADIO_ROOT_PATH=https://127.0.0.1:18443 \
+            -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 \
+            -e HF_HUB_DISABLE_TELEMETRY=1 -e GRADIO_ANALYTICS_ENABLED=False \
+            --entrypoint python3 "$IMAGE" /tmp/smoke-image.py --serve
+          node scripts/browser-smoke.cjs
+
+      - name: Upload browser smoke screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: browser-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/browser-smoke/*.png
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Log in to GHCR after smoke succeeds
         uses: docker/login-action@v3
         with:

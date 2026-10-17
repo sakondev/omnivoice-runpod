@@ -12,6 +12,8 @@ Deploy the upstream [OmniVoice Web UI](https://github.com/k2-fsa/OmniVoice) with
 
 Nginx listens on port 8001 and forwards to OmniVoice on port 8000. Do not start OmniVoice on port 8001. Port 22 provides SSH when Runpod supplies your registered public key.
 
+On Runpod, startup derives the public Gradio URL from `RUNPOD_POD_ID` as `https://<pod-id>-8001.proxy.runpod.net`. This keeps theme CSS, JavaScript, uploads, and queue requests on the public proxy instead of a private Pod IP. Do not put a previous Pod's URL in the template. If you use a custom domain, set `GRADIO_ROOT_PATH` to its complete public URL; that explicit setting takes precedence.
+
 The upstream UI has no login. Treat the public proxy URL as sensitive. Do not use this deployment as a public multi-user service without adding access control.
 
 ## Add a Hugging Face token
@@ -27,7 +29,7 @@ Leave `HF_TOKEN` empty if you have not created the secret. An unresolved secret 
 
 ## Publish an image
 
-Push a commit to `main`, or run **Build and publish image** manually in [GitHub Actions](https://github.com/sakondev/omnivoice-runpod/actions). The workflow builds Linux AMD64, checks the installed CLI, serves the real upstream UI through nginx, and then publishes the checked image to GHCR.
+Push a commit to `main`, or run **Build and publish image** manually in [GitHub Actions](https://github.com/sakondev/omnivoice-runpod/actions). Before publishing, the workflow checks the installed CLI, public URL configuration, and theme CSS. A real browser then loads the UI through a local HTTPS proxy that supplies an incorrect internal Host, matching the Runpod failure case. It checks stylesheet loading, clone and design queue transport, and desktop and mobile layout. Screenshots are saved as a workflow artifact.
 
 Each successful run publishes `latest` and `sha-<full Git commit SHA>`. Use a SHA tag or registry digest to deploy a fixed version. `latest` tracks the last successful publish. The workflow uses GitHub's scoped `GITHUB_TOKEN`; no registry password or HF token is needed in repository secrets.
 
@@ -45,7 +47,7 @@ docker run --rm --network none \
   --entrypoint python3 omnivoice-runpod:local /tmp/smoke-image.py
 ```
 
-The CPU smoke check constructs the real upstream Gradio interface with sample-rate metadata only. It verifies nginx forwarding and UI configuration without downloading models. It does not verify GPU inference or generated audio.
+The CPU smoke check constructs the real upstream Gradio interface with sample-rate metadata only. It verifies nginx forwarding, public URL configuration, and theme CSS without downloading models. The browser check submits empty inputs through the real queue. Neither check verifies GPU inference or generated audio.
 
 To run the full application on a local NVIDIA Docker host, first set `HF_TOKEN` in your shell if you need authentication, then run:
 
