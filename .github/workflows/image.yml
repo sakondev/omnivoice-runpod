@@ -1,0 +1,88 @@
+name: Build and publish image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reclaim preinstalled SDK disk space
+        run: |
+          # The CUDA base alone expands to about 28 GiB. Keep Docker's existing
+          # daemon and discard only unused runner SDKs, never the workspace.
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache /usr/local/share/boost /usr/local/graalvm \
+            /usr/local/.ghcup
+          df -h / /var/lib/docker
+
+      - name: Select image tags
+        id: image
+        env:
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          image="ghcr.io/${REPOSITORY,,}"
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+          echo "sha=$image:sha-$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "latest=$image:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Use the existing Docker daemon
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
+      - name: Build once into the Docker daemon
+        env:
+          SHA_TAG: ${{ steps.image.outputs.sha }}
+          LATEST_TAG: ${{ steps.image.outputs.latest }}
+        run: |
+          docker buildx build --platform linux/amd64 --load --push=false \
+            --provenance=false --tag "$SHA_TAG" --tag "$LATEST_TAG" .
+
+      - name: Check installed CLI
+        env:
+          IMAGE: ${{ steps.image.outputs.sha }}
+        run: timeout 90s docker run --rm --network none --entrypoint omnivoice-demo "$IMAGE" --help
+
+      - name: Check real UI through base nginx
+        env:
+          IMAGE: ${{ steps.image.outputs.sha }}
+        run: |
+          timeout 180s docker run --rm --network none \
+            --mount "type=bind,source=$GITHUB_WORKSPACE/scripts/smoke-image.py,target=/tmp/smoke-image.py,readonly" \
+            --entrypoint python3 "$IMAGE" /tmp/smoke-image.py
+
+      - name: Log in to GHCR after smoke succeeds
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the checked artifact
+        env:
+          SHA_TAG: ${{ steps.image.outputs.sha }}
+          LATEST_TAG: ${{ steps.image.outputs.latest }}
+        run: |
+          docker push "$SHA_TAG"
+          docker push "$LATEST_TAG"
+          digest="$(docker image inspect "$SHA_TAG" --format '{{index .RepoDigests 0}}')"
+          {
+            echo '## Published OmniVoice image'
+            echo "- Commit tag: \`$SHA_TAG\`"
+            echo "- Latest tag: \`$LATEST_TAG\`"
+            echo "- Digest: \`$digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"

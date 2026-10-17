@@ -1,0 +1,38 @@
+{
+  "body": {
+    "name": "OmniVoice Web UI",
+    "image": "ghcr.io/sakondev/omnivoice-runpod:latest",
+    "args": "",
+    "disk": 30,
+    "mounts": {
+      "persistent": {
+        "size": 50,
+        "path": "/workspace"
+      }
+    },
+    "ports": [
+      "8001/http",
+      "22/tcp"
+    ],
+    "env": {
+      "HF_HOME": "/workspace/omnivoice/huggingface",
+      "GRADIO_TEMP_DIR": "/workspace/omnivoice/gradio",
+      "PYTHONUNBUFFERED": "1",
+      "HF_TOKEN": ""
+    },
+    "allowedCudaVersions": [
+      "12.8",
+      "12.9",
+      "13.0",
+      "13.1",
+      "13.2",
+      "13.3",
+      "13.4"
+    ],
+    "category": "NVIDIA",
+    "serverless": false,
+    "public": false,
+    "startSsh": true,
+    "startJupyter": false
+  }
+}
