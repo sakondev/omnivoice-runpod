@@ -52,10 +52,10 @@ jobs:
           docker buildx build --platform linux/amd64 --load --push=false \
             --provenance=false --tag "$SHA_TAG" --tag "$LATEST_TAG" .
 
-      - name: Check installed CLI
+      - name: Check installed Studio CLI
         env:
           IMAGE: ${{ steps.image.outputs.sha }}
-        run: timeout 90s docker run --rm --network none --entrypoint omnivoice-demo "$IMAGE" --help
+        run: timeout 90s docker run --rm --network none --entrypoint python3 "$IMAGE" /opt/omnivoice/studio/server.py --help
 
       - name: Check real UI through base nginx
         env:
@@ -102,9 +102,8 @@ jobs:
           docker run --detach --name "$container" \
             -p 127.0.0.1:18001:8001 \
             --mount "type=bind,source=$GITHUB_WORKSPACE/scripts/smoke-image.py,target=/tmp/smoke-image.py,readonly" \
-            -e GRADIO_ROOT_PATH=https://127.0.0.1:18443 \
             -e HF_HUB_OFFLINE=1 -e TRANSFORMERS_OFFLINE=1 \
-            -e HF_HUB_DISABLE_TELEMETRY=1 -e GRADIO_ANALYTICS_ENABLED=False \
+            -e HF_HUB_DISABLE_TELEMETRY=1 \
             --entrypoint python3 "$IMAGE" /tmp/smoke-image.py --serve
           node scripts/browser-smoke.cjs
 

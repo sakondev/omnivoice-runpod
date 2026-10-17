@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise installed OmniVoice's real Gradio UI through the image's nginx.
-
-No inference or model loading: build_demo reads only sampling_rate at UI creation.
-Run inside the image with its entrypoint overridden to python3.
-"""
+"""Check the real Studio HTTP app through nginx, without loading a model."""
 
 import json
 import os
@@ -11,73 +7,25 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+import tempfile
 import time
-from types import SimpleNamespace
+import uuid
 from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
-
-# Apply before importing upstream Gradio/OmniVoice, including direct --serve runs.
-os.environ.update(
-    HF_HUB_OFFLINE="1",
-    TRANSFORMERS_OFFLINE="1",
-    GRADIO_ANALYTICS_ENABLED="False",
-    NO_PROXY="localhost,127.0.0.1,0.0.0.0",
-    no_proxy="localhost,127.0.0.1,0.0.0.0",
-)
+os.environ.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", NO_PROXY="localhost,127.0.0.1", no_proxy="localhost,127.0.0.1")
+SERVER = Path("/opt/omnivoice/studio/server.py")
+HEADERS = {"Host": "100.65.14.203", "X-Forwarded-Host": "100.65.14.203", "X-Forwarded-Proto": "http"}
 
 
-def serve():
-    for variable in ("HF_HOME", "GRADIO_TEMP_DIR"):
-        if os.environ.get(variable):
-            Path(os.environ[variable]).mkdir(parents=True, exist_ok=True)
-
-    def terminate(signum, frame):
-        raise SystemExit(128 + signum)
-
-    signal.signal(signal.SIGTERM, terminate)
-    signal.signal(signal.SIGINT, terminate)
-    environment = os.environ.copy()
-    environment.pop("HF_TOKEN", None)
-    # Base startup establishes nginx:8001 -> localhost:8000. Its environment
-    # export must neither persist HF_TOKEN nor print credentials into test logs.
-    base = subprocess.Popen(
-        ["/bin/bash", "/start.sh"], env=environment,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    )
-    try:
-        from omnivoice.cli.demo import build_demo
-
-        demo = build_demo(SimpleNamespace(sampling_rate=24000), checkpoint="smoke-metadata-only")
-        demo.queue().launch(server_name="0.0.0.0", server_port=8000, share=False)
-        # Gradio normally blocks; keep direct --serve alive if launch returns.
-        while True:
-            time.sleep(1)
-    finally:
-        stop(base)
-
-
-def check_config(config, expected_root):
-    assert isinstance(config, dict), "nginx returned something other than Gradio config"
-    assert config.get("root") == expected_root, (
-        f"Gradio public root mismatch: {config.get('root')!r} != {expected_root!r}"
-    )
-    components = config.get("components", [])
-    assert isinstance(components, list), "Gradio components missing"
-    kinds = {component.get("type") for component in components}
-    assert {"textbox", "audio", "button"}.issubset(kinds), "speech UI controls missing"
-
-
-def stop(process, timeout=10):
-    # Signal the group even if its leader exited, so descendants cannot survive.
+def stop(process):
     try:
         os.killpg(process.pid, signal.SIGTERM)
     except ProcessLookupError:
         process.wait()
         return
     try:
-        process.wait(timeout=timeout)
+        process.wait(timeout=10)
     except subprocess.TimeoutExpired:
         pass
     finally:
@@ -88,70 +36,110 @@ def stop(process, timeout=10):
         process.wait(timeout=5)
 
 
-def main():
+def serve():
+    def terminate(signum, frame):
+        raise SystemExit(128 + signum)
+
+    signal.signal(signal.SIGTERM, terminate)
+    signal.signal(signal.SIGINT, terminate)
     environment = os.environ.copy()
-    expected_root = environment.setdefault(
-        "GRADIO_ROOT_PATH", "https://proxy-smoke.example.test"
-    )
-    process = subprocess.Popen(
-        [sys.executable, str(Path(__file__).resolve()), "--serve"],
-        env=environment, start_new_session=True,
-    )
+    environment.pop("HF_TOKEN", None)
+    base = subprocess.Popen(["/bin/bash", "/start.sh"], env=environment, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    app = None
     try:
-        opener = build_opener(ProxyHandler({}))
-        headers = {
-            "Host": "100.65.14.203",
-            "X-Forwarded-Host": "100.65.14.203",
-            "X-Forwarded-Proto": "http",
-        }
-        config_request = Request("http://127.0.0.1:8001/config", headers=headers)
+        app = subprocess.Popen([sys.executable, str(SERVER), "--metadata-only", "--ip", "0.0.0.0", "--port", "8000"], start_new_session=True)
+        raise SystemExit(app.wait())
+    finally:
+        if app:
+            stop(app)
+        stop(base)
+
+
+def check_workspace_cleanup():
+    sys.path.insert(0, str(SERVER.parent.parent))
+    from studio.server import job_workspace
+    previous = os.environ.get("OMNIVOICE_TEMP_DIR")
+    with tempfile.TemporaryDirectory() as temporary:
+        base = Path(temporary)
+        stale = base / "omnivoice-studio-abandoned"
+        stale.mkdir()
+        (stale / "upload").write_bytes(b"private reference")
+        keep = base / "unrelated"
+        keep.write_bytes(b"keep")
+        os.environ["OMNIVOICE_TEMP_DIR"] = temporary
+        try:
+            with job_workspace() as active:
+                assert not stale.exists(), "Abandoned reference survived startup"
+                assert keep.read_bytes() == b"keep", "Cleanup touched unrelated files"
+                try:
+                    with job_workspace():
+                        raise AssertionError("Two servers acquired the same temporary base")
+                except RuntimeError:
+                    pass
+                assert active.is_dir(), "Second server removed the active workspace"
+            assert not active.exists(), "Graceful shutdown retained private artifacts"
+        finally:
+            if previous is None:
+                os.environ.pop("OMNIVOICE_TEMP_DIR", None)
+            else:
+                os.environ["OMNIVOICE_TEMP_DIR"] = previous
+
+
+def main():
+    check_workspace_cleanup()
+    process = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "--serve"], start_new_session=True)
+    opener = build_opener(ProxyHandler({}))
+
+    def request(path, body=None, trusted=True):
+        headers = dict(HEADERS)
+        if body is not None:
+            boundary = "StudioSmokeBoundary"
+            body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"plan\"\r\n\r\n{json.dumps(body)}\r\n--{boundary}--\r\n").encode()
+            headers["Content-Type"] = f"multipart/form-data; boundary={boundary}"
+            if trusted:
+                headers["X-OmniVoice-Request"] = "1"
+                headers["Idempotency-Key"] = str(uuid.uuid4())
+        try:
+            response = opener.open(Request("http://127.0.0.1:8001" + path, body, headers), timeout=10)
+        except HTTPError as error:
+            response = error
+        with response:
+            return response.status, response.headers.get_content_type(), response.read()
+
+    try:
         deadline = time.monotonic() + 120
-        last_error = "server not ready"
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                raise RuntimeError(f"smoke child exited with status {process.returncode}")
+                raise RuntimeError(f"Studio smoke server exited: {process.returncode}")
             try:
-                response = opener.open(config_request, timeout=3)
-            except HTTPError as error:
-                if error.code not in (502, 503, 504):
-                    raise
-                last_error = str(error)
-                error.close()
-            except (URLError, TimeoutError) as error:
-                last_error = str(error)
-            else:
-                with response:
-                    assert response.status == 200, "Gradio config did not return HTTP 200"
-                    if response.headers.get_content_type() == "text/html":
-                        last_error = "nginx is waiting for Gradio"
-                        time.sleep(1)
-                        continue
-                    config = json.load(response)
-                # Once reachable, malformed config or failed checks are real failures.
-                check_config(config, expected_root)
-                break
+                status, kind, body = request("/api/config")
+                if status == 200 and kind == "application/json":
+                    config = json.loads(body)
+                    break
+            except (URLError, TimeoutError):
+                pass
             time.sleep(1)
         else:
-            raise RuntimeError(f"OmniVoice /config not ready within 120 seconds: {last_error}")
+            raise RuntimeError("Studio /api/config not reachable through nginx within 120 seconds")
 
-        theme_request = Request(
-            "http://127.0.0.1:8001/theme.css?v=proxy-smoke", headers=headers
-        )
-        with opener.open(theme_request, timeout=10) as response:
-            assert response.status == 200, "theme stylesheet did not return HTTP 200"
-            assert response.headers.get_content_type() == "text/css", (
-                "theme route did not return text/css"
-            )
-            stylesheet = response.read()
-        assert len(stylesheet) > 1000, "theme stylesheet is not substantive"
-        assert b"{" in stylesheet and b"}" in stylesheet, "theme CSS rules missing"
-        assert not stylesheet.lstrip().lower().startswith((b"<!doctype", b"<html")), (
-            "theme route returned placeholder HTML"
-        )
-        print("PASS: real OmniVoice UI, public config root, and theme CSS served through nginx:8001")
+        from omnivoice.utils.lang_map import LANG_NAMES, lang_display_name
+        assert config["languages"] == ["Auto"] + sorted(lang_display_name(n) for n in LANG_NAMES), "Studio omitted or changed supported languages"
+        assert config["ready"] is False, "Metadata-only mode must not claim model readiness"
+        status, kind, _ = request("/")
+        assert (status, kind) == (200, "text/html"), "Studio page not served through nginx"
+        status, kind, body = request("/healthz")
+        assert status == 503 and json.loads(body)["ready"] is False, "Unloaded model reported healthy"
+        phrase = {"text": "Hello.", "language": "Auto", "whisper": False, "pitch": "ปกติ", "speed": 1, "pause": 0}
+        plan = {"mode": "design", "gender": "female", "reference_text": "", "phrases": [phrase]}
+        assert request("/api/jobs", {**plan, "phrases": []})[0] in (400, 422), "Empty scripts accepted"
+        assert request("/api/jobs", {**plan, "phrases": [{**phrase, "language": "NotALanguage"}]})[0] in (400, 422), "Unsupported language accepted"
+        assert request("/api/jobs", {**plan, "phrases": [{**phrase, "speed": 0}]})[0] in (400, 422), "Invalid speed accepted"
+        assert request("/api/jobs", plan, trusted=False)[0] == 403, "Cross-origin form-compatible submission accepted"
+        assert request("/api/jobs", plan)[0] == 503, "Metadata-only mode pretended to synthesize"
+        assert request("/api/jobs/unknown")[0] == 404, "Unknown job did not return404"
+        print("PASS: Studio page/config through nginx, complete languages, input boundaries and honest model readiness; no inference performed")
     finally:
-        # Allow --serve to stop its separately grouped base startup first.
-        stop(process, timeout=15)
+        stop(process)
 
 
 if __name__ == "__main__":

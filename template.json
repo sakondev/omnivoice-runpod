@@ -16,7 +16,7 @@
     ],
     "env": {
       "HF_HOME": "/workspace/omnivoice/huggingface",
-      "GRADIO_TEMP_DIR": "/workspace/omnivoice/gradio",
+      "OMNIVOICE_TEMP_DIR": "/tmp/omnivoice-studio",
       "PYTHONUNBUFFERED": "1",
       "HF_TOKEN": ""
     },

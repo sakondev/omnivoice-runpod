@@ -15,9 +15,15 @@ RUN python3 -m venv --system-site-packages /opt/omnivoice/venv \
 
 ENV PATH="/opt/omnivoice/venv/bin:${PATH}" \
     HF_HOME=/workspace/omnivoice/huggingface \
-    GRADIO_TEMP_DIR=/workspace/omnivoice/gradio
+    OMNIVOICE_TEMP_DIR=/tmp/omnivoice-studio
+
+RUN python -m pip install --no-cache-dir \
+        'fastapi==0.143.3' 'uvicorn==0.54.0' \
+        'pydantic==2.14.1' 'python-multipart==0.0.32'
 
 WORKDIR /opt/omnivoice
+COPY studio/ /opt/omnivoice/studio/
+COPY nginx.conf /etc/nginx/nginx.conf
 COPY --chmod=755 start-omnivoice.sh /usr/local/bin/start-omnivoice.sh
 
 EXPOSE 8001 22
