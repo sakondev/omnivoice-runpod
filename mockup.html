@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>OmniVoice Studio — ตัวอย่างหน้าจอ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+:root{
+ --ink:#282332;--muted:#6b6475;--line:#e3dfe9;--soft:#f8f7fa;
+ --violet:#6545b3;--violet-dark:#4e328e;--selected:#f7f3fd;--danger:#a02d37;
+ --radius:8px;
+ --font-ui:'Google Sans','Leelawadee UI',Tahoma,sans-serif;
+}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#c9c0d6 var(--soft)}
+body{margin:0;background:#fff;color:var(--ink);font:16px/1.7 var(--font-ui)}
+button,input,select,textarea{font:inherit}
+button,select,input[type=checkbox],input[type=range]{cursor:pointer}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:8px 13px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;color:var(--ink);font-size:13px;font-weight:600}
+button:hover{background:#f2eef8;border-color:#bdb0d2}
+button:active{background:#e9e1f5}
+button:disabled{cursor:not-allowed;background:#f1eff4;color:#76707f;border-color:#e3dfe9}
+button.primary{color:#fff;background:var(--violet);border-color:var(--violet)}
+button.primary:hover{background:var(--violet-dark)}
+button.quiet{background:transparent;border-color:transparent}
+button.quiet:hover{background:#eee8f6}
+button.danger{color:var(--danger)}
+:focus-visible{outline:3px solid #8966cf;outline-offset:3px}
+::selection{background:#e0d4f7;color:#2f2050}
+textarea,input{caret-color:var(--violet)}
+textarea,select,input[type=text],input[type=search]{width:100%;min-width:0;border:1px solid #c9c1d2;border-radius:var(--radius);padding:10px 11px;background:#fff;color:var(--ink)}
+select{min-height:44px;font-size:14px}
+textarea{resize:vertical;line-height:1.9}
+textarea::placeholder,input::placeholder{color:var(--muted);opacity:1}
+label,.label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}
+h1,h2,h3,p{margin:0}
+h1{font-size:21px;line-height:1.4;letter-spacing:-.025em}
+h2{font-size:18px;line-height:1.5;text-wrap:balance}
+h3{font-size:14px}
+small,.help{font-size:13px;color:var(--muted);line-height:1.75}
+.help{margin-top:8px}
+svg.icon{width:18px;height:18px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.icon-defs{position:absolute;width:0;height:0;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 30px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{display:grid;place-items:center;width:36px;height:36px;background:var(--violet);border-radius:10px;color:#fff}
+.brand-mark svg{width:23px;height:23px}
+.mockup-label{font-size:12px;border:1px solid #ded3ed;border-radius:6px;padding:5px 10px;color:#604880;background:#f8f4fd}
+.steps{display:flex;align-items:center;gap:32px;list-style:none;margin:0;padding:12px 30px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted);background:#fff}
+.steps li{display:flex;align-items:center;gap:9px}
+.step-number{display:grid;place-items:center;width:24px;height:24px;border:1px solid #cec6d8;border-radius:50%;font-size:12px;font-variant-numeric:tabular-nums}
+.steps li:nth-child(2){color:var(--violet);font-weight:600}
+.steps li:nth-child(2) .step-number{color:#fff;background:var(--violet);border-color:var(--violet)}
+.workspace{display:grid;grid-template-columns:280px minmax(0,1fr) 310px;align-items:stretch;max-width:1700px;margin:auto;min-height:calc(100vh - 126px)}
+.voice-panel,.inspector{padding:28px 24px;background:var(--soft)}
+.voice-panel{border-right:1px solid var(--line)}
+.voice-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;min-height:36px}
+.voice-summary::-webkit-details-marker{display:none}
+.voice-summary .icon{color:var(--muted)}
+#voice-settings[open]>.voice-summary .icon{transform:rotate(180deg)}
+.voice-settings-body{padding-top:3px}
+.inspector{border-left:1px solid var(--line)}
+.section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+.editor-title{display:flex;align-items:baseline;flex-wrap:wrap;gap:12px}
+.editor-title h2{font-size:25px;letter-spacing:-.02em}
+.section-heading small{white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+.mode-switch{display:flex;padding:4px;background:#eae5f1;border-radius:9px;margin:16px 0 22px;gap:4px}
+.mode-switch button{flex:1;min-width:0;padding:7px 5px;min-height:40px;border-color:transparent;font-size:12px;background:transparent}
+.mode-switch button[aria-pressed=true]{background:#fff;color:var(--violet)}
+.upload{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px 15px;border:1px dashed #b4a7c7;border-radius:12px;background:#fff;margin-top:12px}
+.upload .icon{color:var(--violet);width:24px;height:24px}
+.upload label{margin:0;font-size:14px}
+.upload input{width:100%;font-size:12px;color:var(--muted)}
+input::file-selector-button{font:inherit;background:#eee7f8;color:#513884;border:0;border-radius:5px;padding:8px;margin-right:6px;cursor:pointer}
+.field{margin-top:24px}
+.reference-meta{font-size:13px;overflow-wrap:anywhere;margin-top:12px}
+.audio{width:100%;height:40px;margin-top:12px}
+.mic-section{border-top:1px solid var(--line);margin-top:26px;padding-top:22px}
+.mic-section button{width:100%}
+.status{font-size:13px;margin-top:10px;overflow-wrap:anywhere}
+.status:empty{display:none}
+.error{color:var(--danger)}
+.note{padding-top:20px;margin-top:24px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.editor{min-width:0;padding:28px 32px 36px}
+.editor .section-heading{margin-bottom:8px}
+.editor-intro{color:var(--muted);font-size:14px;margin-bottom:24px}
+.blocks{border-top:1px solid var(--line)}
+.phrase{padding:18px 16px;border-bottom:1px solid var(--line);position:relative}
+.phrase.selected{background:var(--selected)}
+.phrase-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.phrase-select{font-size:13px;min-height:36px;padding:5px 8px;margin-left:-8px;border-color:transparent;background:transparent;color:var(--muted)}
+.phrase.selected .phrase-select{color:var(--violet)}
+.selected-label{font-size:12px;color:var(--violet);margin-right:auto}
+.phrase-settings{margin-left:auto;color:var(--violet);font-size:12px;min-height:36px;padding:5px 8px;background:transparent;border-color:transparent}
+.text-field{background:#fff;border:1px solid #ded7e7;border-radius:10px;min-width:0;overflow:hidden}
+.phrase.selected .text-field{border-color:#b7a0d6}
+.text-field:focus-within{border-color:var(--violet)}
+.phrase .text-field textarea{display:block;width:100%;margin:0;padding:14px 15px;border:0;background:transparent;border-radius:9px 9px 0 0;min-height:88px;font-size:17px}
+.phrase .text-field textarea:focus-visible{outline-offset:-4px}
+.field-tools{padding:0 14px;border-top:1px solid #ece7f2}
+.field-tools summary{display:list-item;cursor:pointer;color:var(--violet);font-size:13px;font-weight:600;padding:12px 0;min-height:44px}
+.field-tools details[open]{padding-bottom:14px}
+.field-tools details>.help{margin:0 0 14px;font-weight:400}
+.expression-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.expression-group h3{font-size:13px;color:var(--muted);margin-bottom:8px}
+.expression-group button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:start;margin-top:6px;font-size:13px;min-height:52px;padding:8px;border-color:#e6e0ee}
+.expression-group code{font-size:12px;color:var(--muted);overflow-wrap:anywhere;max-width:100%}
+.phrase-summary{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.8}
+.add-block{margin-top:18px;color:var(--violet)}
+.script-note{font-size:13px;color:var(--muted);margin-top:14px;max-width:65ch}
+.review-area{margin-top:32px;border-top:1px solid var(--line);padding-top:24px;scroll-margin-top:20px}
+.review-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.review-heading p{font-size:13px;color:var(--muted);margin-top:5px}
+.editor .section-heading .primary{white-space:nowrap}
+.empty-output{display:flex;align-items:flex-start;gap:14px;margin-top:22px;padding:20px 0;border-top:1px solid var(--line)}
+.empty-output .icon{color:#80718e;margin-top:4px;width:24px;height:24px}
+.empty-output p{font-size:13px;color:var(--muted);margin-top:6px;max-width:60ch}
+.empty-output button{font-size:12px;margin-top:14px;min-height:40px}
+.inspector-heading{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.inspector-title{margin-bottom:6px}
+.inspector-subtitle{font-size:13px;color:var(--muted)}
+.control-group{margin-top:22px}
+.control-group .help{margin-top:8px}
+.switch-label{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:400;cursor:pointer;min-height:36px;margin:0}
+.switch-label input{width:18px;height:18px;accent-color:var(--violet)}
+.range-label{display:flex;justify-content:space-between;gap:12px}
+.range-label output{color:var(--violet);font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--violet);margin:8px 0;min-height:24px}
+.range-ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.language-search{font-size:13px;margin-bottom:8px}
+.inspector-footer{margin-top:24px;border-top:1px solid var(--line);padding-top:18px}
+.return-to-script{display:none}
+.plan{margin-top:18px;padding:20px;background:#f7f3fc;border:1px solid #d8cbea;border-radius:12px}
+.plan h3{color:#513884;margin-bottom:8px}
+.plan>p{font-size:13px;color:var(--muted)}
+.plan ol{padding-left:23px;margin:16px 0 8px}
+.plan li{padding:12px 0;border-top:1px solid #e0d7ec;white-space:pre-wrap;overflow-wrap:anywhere}
+.plan li small{display:block;margin-top:6px}
+.review-error{font-size:14px;margin-bottom:16px}
+.review-error:empty{display:none}
+.footer-note{font-size:12px;color:var(--muted);padding-top:18px;margin-top:18px;border-top:1px solid var(--line)}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(min-width:1181px){
+ .inspector{position:sticky;top:0;align-self:start;max-height:100vh;overflow:auto;scrollbar-gutter:stable}
+ .phrase-settings{display:none}
+}
+@media(min-width:1450px){.editor{padding-inline:44px}.phrase{padding-inline:22px}}
+@media(max-width:1180px){
+ .workspace{grid-template-columns:250px minmax(0,1fr)}
+ .inspector{grid-column:2;border-left:0;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:26px 28px;scroll-margin-top:16px}
+ .voice-panel{grid-row:1 / 3}
+ .inspector-heading,.language-control,.inspector>.note,.inspector-footer{grid-column:1/-1}
+ .return-to-script{display:inline-flex;margin-top:12px;color:var(--violet)}
+ .editor{padding-inline:24px}
+ .editor .section-heading{align-items:flex-start;flex-wrap:wrap}
+ .expression-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .topbar{align-items:flex-start;flex-direction:column;padding:18px 20px;gap:12px}
+ .topbar h1{font-size:21px}
+ .steps{padding:12px 20px;gap:12px;justify-content:space-between;font-size:12px}
+ .steps li{gap:6px}
+ .step-number{width:22px;height:22px;flex-shrink:0}
+ .workspace{display:flex;flex-direction:column}
+ .voice-panel{border-right:0;border-bottom:1px solid var(--line);padding:16px 20px}
+ .voice-settings-body{padding-top:10px}
+ .mode-switch{margin:10px 0 18px}
+ .mode-switch button{font-size:13px;min-height:44px}
+ .mic-section button{width:auto}
+ .editor{padding:24px 16px 30px}
+ .editor .section-heading{align-items:center;gap:14px}
+ .editor-title h2{font-size:24px}
+ .editor .section-heading .primary{padding-inline:10px;font-size:12px}
+ .editor-intro{font-size:13px;margin-bottom:20px}
+ .phrase{padding:14px 10px 16px}
+ .phrase-select,.phrase-settings{min-height:44px}
+ .phrase-header{gap:6px;margin-bottom:8px}
+ .selected-label{font-size:12px}
+ .phrase-settings{padding-inline:5px}
+ .phrase .text-field textarea{font-size:16px;padding:12px;min-height:104px}
+ .field-tools{padding-inline:12px}
+ .expression-list{gap:12px 9px}
+ .expression-group button{font-size:12px}
+ .phrase-summary{line-height:1.9}
+ .add-block{width:100%;min-height:44px}
+ .inspector{padding:24px 22px;gap:0 18px}
+ .inspector>.control-group{grid-column:1/-1}
+ .inspector-heading{padding-bottom:18px}
+ .inspector-footer{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+ .inspector-footer>.help{flex-basis:100%;margin:0}
+ .return-to-script{margin:0}
+ .note{margin-top:20px;padding-top:18px}
+}
+@media(max-width:360px){
+ .editor .section-heading .primary{width:100%}
+ .selected-label{display:none}
+ .steps{padding-inline:14px;gap:8px}
+}
+@media(prefers-reduced-motion:no-preference){
+ button{transition:background-color .15s ease,border-color .15s ease}
+ .plan{animation:reveal .2s cubic-bezier(.16,1,.3,1)}
+ @keyframes reveal{from{opacity:.65;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+}
+</style>
+</head>
+<body>
+<svg class="icon-defs" aria-hidden="true"><defs>
+<symbol id="voice" viewBox="0 0 24 24"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5"/></symbol>
+<symbol id="mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v2a7 7 0 0 0 14 0v-2M12 20v2m-4 0h8"/></symbol>
+<symbol id="review-icon" viewBox="0 0 24 24"><path d="M8 4H5v17h14V4h-3M9 2h6v5H9zM8 13l3 3 5-6"/></symbol>
+<symbol id="headphones" viewBox="0 0 24 24"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></symbol>
+<symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7"/></symbol>
+<symbol id="chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--soft)"/><circle cx="15" cy="17" r="3" fill="var(--soft)"/></symbol>
+</defs></svg>
+<header class="topbar">
+ <div class="brand"><span class="brand-mark"><svg class="icon" aria-hidden="true"><use href="#voice"/></svg></span><h1>OmniVoice <span style="font-weight:400;color:var(--muted)">Studio</span></h1></div>
+ <span class="mockup-label">ตัวอย่างหน้าจอ · ยังไม่เชื่อมต่อโมเดล</span>
+</header>
+<nav aria-label="ขั้นตอนการเตรียมเสียง"><ol class="steps"><li><span class="step-number">1</span>เลือกเสียง</li><li><span class="step-number">2</span>เขียนบท</li><li><span class="step-number">3</span>ตรวจแล้วสร้าง</li></ol></nav>
+<main class="workspace">
+ <aside class="voice-panel" aria-labelledby="voice-heading">
+  <details id="voice-settings" open><summary class="voice-summary"><h2 id="voice-heading">เสียงที่ใช้</h2><svg class="icon" aria-hidden="true"><use href="#chevron"/></svg></summary><div class="voice-settings-body">
+  <div class="mode-switch" role="group" aria-label="รูปแบบเสียง"><button type="button" id="clone-mode" aria-pressed="true">ใช้เสียงอ้างอิง</button><button type="button" id="design-mode" aria-pressed="false">ออกแบบเสียง</button></div>
+  <div id="clone-fields">
+   <p class="help">เลือกคลิปเสียงต้นฉบับเพื่อเตรียมโคลนเสียง</p>
+   <div class="upload"><svg class="icon" aria-hidden="true"><use href="#upload"/></svg><label for="reference-file">เพิ่มไฟล์เสียงอ้างอิง</label><small>ไฟล์เสียงจากเครื่องของคุณ</small><input type="file" id="reference-file" accept="audio/*" aria-describedby="file-status"></div>
+   <p id="file-status" class="status" role="status">ยังไม่ได้เลือกไฟล์</p>
+   <div id="reference-preview" hidden><p id="reference-meta" class="reference-meta"></p><audio id="reference-audio" class="audio" controls preload="metadata" aria-label="ฟังไฟล์เสียงอ้างอิง"></audio><button type="button" id="clear-file" class="quiet danger" style="font-size:12px;margin-top:3px">นำไฟล์ออก</button></div>
+   <div class="field"><label for="reference-text">ข้อความในคลิป</label><textarea id="reference-text" rows="3" placeholder="พิมพ์คำพูดที่ได้ยินในคลิป…" aria-describedby="transcript-help"></textarea><p id="transcript-help" class="help">ใส่ข้อความตามคลิป หากไม่ต้องการถอดเสียงอัตโนมัติ</p><p class="help">หน้านี้ไม่ถอดเสียงและไม่ส่งไฟล์ออกจากเครื่อง</p></div>
+  </div>
+  <div id="design-fields" hidden><label for="voice-gender">ลักษณะเสียง</label><select id="voice-gender"><option value="ไม่ระบุเพศ">ไม่ระบุเพศ</option><option value="เสียงผู้หญิง">เสียงผู้หญิง</option><option value="เสียงผู้ชาย">เสียงผู้ชาย</option></select><p class="help">เป็นคำสั่งลักษณะเสียง ไม่ใช่การเลือกผู้พูดสำเร็จรูป ผลจริงขึ้นอยู่กับโมเดล</p></div>
+  <div class="mic-section"><button type="button" id="check-mic"><svg class="icon" aria-hidden="true"><use href="#mic"/></svg>ตรวจสอบไมค์</button><p class="help">ขอสิทธิ์เฉพาะเมื่อกดปุ่ม แล้วปิดไมค์ทันที ไม่บันทึกเสียง</p><p id="mic-status" class="status" role="status"></p></div>
+  <p class="note">เสียงอ้างอิงใช้ร่วมกันทั้งบท หากคลิปมีสไตล์ชัดเจน สไตล์นั้นอาจมีอิทธิพลเหนือคำสั่งเสียงที่ตั้งไว้</p>
+  </div></details>
+ </aside>
+ <section class="editor" aria-labelledby="script-heading">
+  <div class="section-heading"><div class="editor-title"><h2 id="script-heading">บทพูด</h2><small id="block-count">3 ช่วงเสียง</small></div><button type="button" class="primary" id="review"><svg class="icon" aria-hidden="true"><use href="#review-icon"/></svg>ตรวจแผนการสร้าง</button></div>
+  <p class="editor-intro">แบ่งประโยคเป็นช่วง แล้วปรับการพูดทีละช่วง</p>
+  <p id="review-error" class="review-error error" role="alert"></p>
+  <div id="blocks" class="blocks"></div>
+  <button type="button" class="add-block" id="add-block"><svg class="icon" aria-hidden="true"><use href="#plus"/></svg>เพิ่มช่วงเสียง</button>
+  <p class="script-note">เลือกช่วงที่ต้องการเพื่อปรับเสียงทางด้านขวา บนจอเล็กกด “ตั้งค่า” ที่ช่วงเสียงเพื่อไปยังแผงตั้งค่า</p>
+  <section class="review-area" aria-labelledby="review-heading">
+   <div class="review-heading"><div><h2 id="review-heading">ตรวจบทก่อนสร้าง</h2><p>ดูข้อความและการตั้งค่าที่เตรียมไว้</p></div></div>
+   <section id="plan" class="plan" aria-labelledby="plan-heading" tabindex="-1" hidden><h3 id="plan-heading">แผนการสร้าง · ยังไม่ได้สร้างเสียง</h3><p id="plan-voice"></p><ol id="plan-blocks"></ol><p>นี่คือแผนสำหรับพิจารณา UI เท่านั้น การสร้างแยกช่วงและการต่อช่วงพร้อมพักเสียงยังไม่ได้เชื่อมกับแอปจริง</p></section>
+   <div class="empty-output"><svg class="icon" aria-hidden="true"><use href="#headphones"/></svg><div><h3>เสียงที่สร้างจะอยู่ตรงนี้</h3><p>ยังไม่มีไฟล์เสียงที่สร้างจากโมเดล ในตัวอย่างนี้ฟังได้เฉพาะไฟล์อ้างอิงที่คุณเลือก ไม่มีการสร้างเสียงหรือจำลองผลลัพธ์</p><button type="button" disabled>ดาวน์โหลดเสียง · ยังไม่พร้อมใช้งาน</button></div></div>
+  </section>
+  <p class="footer-note">ตัวอย่างนี้เก็บข้อมูลไว้เฉพาะในหน้านี้ รีเฟรชแล้วบทที่แก้ไขและไฟล์ที่เลือกจะหายไป</p>
+ </section>
+ <aside class="inspector" aria-labelledby="inspector-heading">
+  <div class="inspector-heading"><h2 id="inspector-heading" class="inspector-title">ตั้งค่าช่วงที่ 1</h2><p class="inspector-subtitle">มีผลกับทั้งช่วงที่เลือก ไม่ใช่เฉพาะคำ</p></div>
+  <div class="control-group language-control"><label for="language">ภาษาของช่วงนี้</label><label for="language-search" class="sr-only">ค้นหาภาษา</label><input id="language-search" class="language-search" type="search" placeholder="ค้นหาภาษา เช่น ไทย, Thai, English" autocomplete="off" aria-controls="language"><select id="language" aria-describedby="language-help"></select><p id="language-help" class="help">อัตโนมัติให้โมเดลตรวจภาษาจากข้อความ หรือเลือกภาษาเองได้ ไม่ใช่การแปลบทพูด</p><p id="language-count" class="help" role="status"></p></div>
+  <div class="control-group"><label>รูปแบบการพูด</label><label class="switch-label" for="whisper"><input type="checkbox" id="whisper">พูดกระซิบ</label></div>
+  <div class="control-group"><label for="pitch">ระดับเสียงสูง–ต่ำ</label><select id="pitch"><option value="ปกติ">ปกติ</option><option value="ต่ำ">ต่ำ</option><option value="สูง">สูง</option></select><p class="help">เป็นคำสั่งให้โมเดลตีความ ไม่ใช่การปรับคีย์เสียงแบบตายตัว</p></div>
+  <div class="control-group"><label for="speed" class="range-label"><span>ความเร็วการพูด</span><output id="speed-value" for="speed">1.0×</output></label><input type="range" id="speed" min="0.7" max="1.3" step="0.1" value="1"><div class="range-ends"><span>ช้าลง 0.7×</span><span>เร็วขึ้น 1.3×</span></div></div>
+  <div class="control-group"><label for="pause">พักหลังช่วงนี้</label><select id="pause"><option value="0">ไม่พักเพิ่ม</option><option value="0.3">0.3 วินาที</option><option value="0.5">0.5 วินาที</option><option value="1">1 วินาที</option></select><p class="help">เสนอให้แอปต่อเสียงพร้อมช่วงเงียบ ไม่ใช่คำสั่งอารมณ์ของโมเดล</p></div>
+  <p class="note">ยังไม่รองรับการกำหนดอารมณ์รายคำ เช่น “โกรธ” หรือ “มีความสุข” หากต้องการปรับวิธีพูดเฉพาะประโยค ให้แยกเป็นอีกช่วง</p>
+  <div class="inspector-footer"><button type="button" id="remove-block" class="quiet danger"><svg class="icon" aria-hidden="true"><use href="#trash"/></svg>ลบช่วงที่เลือก</button><button type="button" id="return-to-script" class="return-to-script">กลับไปยังข้อความ</button><p class="help" id="remove-help">เหลืออย่างน้อย 1 ช่วงในบท</p></div>
+ </aside>
+</main>
+<p class="sr-only" id="editor-status" role="status" aria-live="polite"></p>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+// Exact language choices from OmniVoice demo.py at 08be0b4ccbac3e13e374e86fbfead4b4cac343e2.
+const languages = ["Auto", "Abadi", "Abkhazian", "Abron", "Abua", "Adamawa Fulfulde", "Adyghe", "Afade", "Afrikaans", "Agwagwune", "Aja (Benin)", "Akebu", "Alago", "Albanian", "Algerian Arabic", "Algerian Saharan Arabic", "Ambo-Pasco Quechua", "Ambonese Malay", "Amdo Tibetan", "Amharic", "Anaang", "Angika", "Antankarana Malagasy", "Aragonese", "Arbëreshë Albanian", "Arequipa-La Unión Quechua", "Armenian", "Ashe", "Ashéninka Perené", "Askopan", "Assamese", "Asturian", "Atayal", "Awak", "Ayacucho Quechua", "Azerbaijani", "Baatonum", "Bacama", "Bade", "Bafia", "Bafut", "Bagirmi Fulfulde", "Bago-Kusuntu", "Baharna Arabic", "Bakoko", "Balanta-Ganja", "Balti", "Bamenyam", "Bamun", "Bangwinji", "Banjar", "Bankon", "Baoulé", "Bara Malagasy", "Barok", "Basa (Cameroon)", "Basa (Nigeria)", "Bashkir", "Basque", "Batak Mandailing", "Batanga", "Bateri", "Bats", "Bayot", "Bebele", "Belarusian", "Bengali", "Betawi", "Bhili", "Bhojpuri", "Bilur", "Bima", "Bodo", "Boghom", "Bokyi", "Bomu", "Bondei", "Borgu Fulfulde", "Bosnian", "Brahui", "Braj", "Breton", "Buduma", "Buginese", "Bukharic", "Bulgarian", "Bulu (Cameroon)", "Bundeli", "Bunun", "Bura-Pabir", "Burak", "Burmese", "Burushaski", "Cacaloxtepec Mixtec", "Cajatambo North Lima Quechua", "Cakfem-Mushere", "Cameroon Pidgin", "Campidanese Sardinian", "Cantonese", "Catalan", "Cebuano", "Cen", "Central Kurdish", "Central Nahuatl", "Central Pame", "Central Pashto", "Central Puebla Nahuatl", "Central Tarahumara", "Central Yupik", "Central-Eastern Niger Fulfulde", "Chadian Arabic", "Chichewa", "Chichicapan Zapotec", "Chiga", "Chimalapa Zoque", "Chimborazo Highland Quichua", "Chinese", "Chiquián Ancash Quechua", "Chitwania Tharu", "Chokwe", "Chuvash", "Cibak", "Coastal Konjo", "Copainalá Zoque", "Cornish", "Corongo Ancash Quechua", "Croatian", "Cross River Mbembe", "Cuyamecalco Mixtec", "Czech", "Dadiya", "Dagbani", "Dameli", "Danish", "Dargwa", "Dazaga", "Deccan", "Degema", "Dera (Nigeria)", "Dghwede", "Dhatki", "Dhivehi", "Dhofari Arabic", "Dijim-Bwilim", "Dogri", "Domaaki", "Dotyali", "Duala", "Dutch", "DũYa", "Dyula", "Eastern Balochi", "Eastern Bolivian Guaraní", "Eastern Egyptian Bedawi Arabic", "Eastern Krahn", "Eastern Mari", "Eastern Yiddish", "Ebrié", "Eggon", "Egyptian Arabic", "Ejagham", "Eleme", "Eloyi", "Embu", "English", "Erzya", "Esan", "Esperanto", "Estonian", "Eton (Cameroon)", "Ewondo", "Extremaduran", "Fang (Equatorial Guinea)", "Fanti", "Farefare", "Fe'fe'", "Filipino", "Filomena Mata-Coahuitlán Totonac", "Finnish", "Fipa", "French", "Fulah", "Galician", "Gambian Wolof", "Ganda", "Garhwali", "Gawar-Bati", "Gawri", "Gbagyi", "Gbari", "Geji", "Gen", "Georgian", "German", "Geser-Gorom", "Gheg Albanian", "Ghomálá'", "Gidar", "Glavda", "Goan Konkani", "Goaria", "Goemai", "Gola", "Greek", "Guarani", "Guduf-Gava", "Guerrero Amuzgo", "Gujarati", "Gujari", "Gulf Arabic", "Gurgula", "Gusii", "Gusilay", "Gweno", "Güilá Zapotec", "Hadothi", "Hahon", "Haitian", "Hakha Chin", "Hakö", "Halia", "Hausa", "Hawaiian", "Hazaragi", "Hebrew", "Hemba", "Herero", "Highland Konjo", "Hijazi Arabic", "Hindi", "Huarijio", "Huautla Mazatec", "Huaxcaleca Nahuatl", "Huba", "Huitepec Mixtec", "Hula", "Hungarian", "Hunjara-Kaina Ke", "Hwana", "Ibibio", "Icelandic", "Idakho-Isukha-Tiriki", "Idoma", "Igbo", "Igo", "Ikposo", "Ikwere", "Imbabura Highland Quichua", "Indonesian", "Indus Kohistani", "Interlingua (International Auxiliary Language Association)", "Inupiaq", "Irish", "Iron Ossetic", "Isekiri", "Isoko", "Italian", "Ito", "Itzá", "Ixtayutla Mixtec", "Izon", "Jambi Malay", "Japanese", "Jaqaru", "Jauja Wanca Quechua", "Jaunsari", "Javanese", "Jiba", "Jju", "Judeo-Moroccan Arabic", "Juxtlahuaca Mixtec", "Kabardian", "Kabras", "Kabuverdianu", "Kabyle", "Kachi Koli", "Kairak", "Kalabari", "Kalasha", "Kalenjin", "Kalkoti", "Kamba", "Kamo", "Kanauji", "Kanembu", "Kannada", "Karekare", "Kashmiri", "Kathoriya Tharu", "Kati", "Kazakh", "Keiyo", "Khams Tibetan", "Khana", "Khetrani", "Khmer", "Khowar", "Kinga", "Kinnauri", "Kinyarwanda", "Kirghiz", "Kirya-Konzəl", "Kochila Tharu", "Kohistani Shina", "Kohumono", "Kok Borok", "Kol (Papua New Guinea)", "Kom (Cameroon)", "Koma", "Konkani", "Konzo", "Korean", "Korwa", "Kota (India)", "Koti", "Kuanua", "Kuanyama", "Kui (India)", "Kulung (Nigeria)", "Kuot", "Kushi", "Kwambi", "Kwasio", "Lala-Roba", "Lamang", "Lao", "Larike-Wakasihu", "Lasi", "Latgalian", "Latvian", "Levantine Arabic", "Liana-Seti", "Liberia Kpelle", "Liberian English", "Libyan Arabic", "Ligurian", "Lijili", "Lingala", "Lithuanian", "Loarki", "Logooli", "Logudorese Sardinian", "Loja Highland Quichua", "Loloda", "Longuda", "Loxicha Zapotec", "Luba-Lulua", "Luo", "Lushai", "Luxembourgish", "Maasina Fulfulde", "Maba (Chad)", "Macedo-Romanian", "Macedonian", "Mada (Cameroon)", "Mafa", "Maithili", "Malay", "Malayalam", "Mali", "Malinaltepec Me'phaa", "Maltese", "Mandara", "Mandjak", "Manggarai", "Manipuri", "Mansoanka", "Manx", "Maori", "Marathi", "Marghi Central", "Marghi South", "Maria (India)", "Marwari (Pakistan)", "Masana", "Masikoro Malagasy", "Matsés", "Mazaltepec Zapotec", "Mazatlán Mazatec", "Mazatlán Mixe", "Mbe", "Mbo (Cameroon)", "Mbum", "Medumba", "Mekeo", "Meru", "Mesopotamian Arabic", "Mewari", "Min Nan Chinese", "Mingrelian", "Mitlatongo Mixtec", "Miya", "Mokpwe", "Moksha", "Mom Jango", "Mongolian", "Moroccan Arabic", "Motu", "Mpiemo", "Mpumpong", "Mundang", "Mungaka", "Musey", "Musgu", "Musi", "Naba", "Najdi Arabic", "Nalik", "Nawdm", "Ndonga", "Neapolitan", "Nepali", "Ngamo", "Ngas", "Ngiemboon", "Ngizim", "Ngomba", "Ngombale", "Nigerian Fulfulde", "Nigerian Pidgin", "Nimadi", "Nobiin", "North Mesopotamian Arabic", "North Moluccan Malay", "Northern Betsimisaraka Malagasy", "Northern Hindko", "Northern Kurdish", "Northern Pame", "Northern Pashto", "Northern Uzbek", "Northwest Gbaya", "Norwegian", "Norwegian Bokmål", "Norwegian Nynorsk", "Notsi", "Nyankpa", "Nyungwe", "Nzanyi", "Nüpode Huitoto", "Occitan", "Od", "Odia", "Odual", "Omani Arabic", "Orizaba Nahuatl", "Orma", "Ormuri", "Oromo", "Pahari-Potwari", "Paiwan", "Panjabi", "Papuan Malay", "Parkari Koli", "Pedi", "Pero", "Persian", "Petats", "Phalura", "Piemontese", "Piya-Kwonci", "Plateau Malagasy", "Polish", "Poqomam", "Portuguese", "Pulaar", "Pular", "Puno Quechua", "Pushto", "Pökoot", "Qaqet", "Quiotepec Chinantec", "Rana Tharu", "Rangi", "Rapoisi", "Ratahan", "Rayón Zoque", "Romanian", "Romansh", "Rombo", "Rotokas", "Rukai", "Russian", "Sacapulteco", "Saidi Arabic", "Sakalava Malagasy", "Sakizaya", "Saleman", "Samba Daka", "Samba Leko", "San Felipe Otlaltepec Popoloca", "San Francisco Del Mar Huave", "San Juan Atzingo Popoloca", "San Martín Itunyoso Triqui", "San Miguel El Grande Mixtec", "Sansi", "Sanskrit", "Santa Ana de Tusi Pasco Quechua", "Santa Catarina Albarradas Zapotec", "Santali", "Santiago del Estero Quichua", "Saposa", "Saraiki", "Sardinian", "Saya", "Sediq", "Serbian", "Seri", "Shina", "Shona", "Siar-Lak", "Sibe", "Sicilian", "Sihuas Ancash Quechua", "Sikkimese", "Sinaugoro", "Sindhi", "Sindhi Bhil", "Sinhala", "Sinicahua Mixtec", "Sipacapense", "Siwai", "Slovak", "Slovenian", "Solos", "Somali", "Soninke", "South Giziga", "South Ucayali Ashéninka", "Southeastern Nochixtlán Mixtec", "Southern Betsimisaraka Malagasy", "Southern Pashto", "Southern Pastaza Quechua", "Soyaltepec Mazatec", "Spanish", "Standard Arabic", "Standard Moroccan Tamazight", "Sudanese Arabic", "Sulka", "Svan", "Swahili", "Swedish", "Tae'", "Tahaggart Tamahaq", "Taita", "Tajik", "Tamil", "Tandroy-Mahafaly Malagasy", "Tangale", "Tanosy Malagasy", "Tarok", "Tatar", "Tedaga", "Telugu", "Tem", "Teop", "Tepeuxila Cuicatec", "Tepinapa Chinantec", "Tera", "Terei", "Termanu", "Tesaka Malagasy", "Tetelcingo Nahuatl", "Teutila Cuicatec", "Thai", "Tibetan", "Tidaá Mixtec", "Tidore", "Tigak", "Tigre", "Tigrinya", "Tilquiapan Zapotec", "Tinputz", "Tlacoapa Me'phaa", "Tlacoatzintepec Chinantec", "Tlingit", "Toki Pona", "Tomoip", "Tondano", "Tonsea", "Tooro", "Torau", "Torwali", "Tsimihety Malagasy", "Tsotso", "Tswana", "Tugen", "Tuki", "Tula", "Tulu", "Tunen", "Tungag", "Tunisian Arabic", "Tupuri", "Turkana", "Turkish", "Turkmen", "Tututepec Mixtec", "Twi", "Ubaghara", "Uighur", "Ukrainian", "Umbundu", "Upper Sorbian", "Urdu", "Ushojo", "Uzbek", "Vai", "Vietnamese", "Votic", "Võro", "Waci Gbe", "Wadiyara Koli", "Waja", "Wakhi", "Wanga", "Wapan", "Warji", "Welsh", "Wemale", "Western Frisian", "Western Highland Purepecha", "Western Juxtlahuaca Mixtec", "Western Maninkakan", "Western Mari", "Western Niger Fulfulde", "Western Panjabi", "Wolof", "Wuzlam", "Xanaguía Zapotec", "Xhosa", "Yace", "Yakut", "Yalahatan", "Yanahuanca Pasco Quechua", "Yangben", "Yaqui", "Yauyos Quechua", "Yekhee", "Yiddish", "Yidgha", "Yoruba", "Yutanduchi Mixtec", "Zacatlán-Ahuacatlán-Tepetzintla Nahuatl", "Zarma", "Zaza", "Zulu", "Ömie"];
+const expressionGroups = [
+ {label:'เสียงประกอบ',items:[['หัวเราะ','[laughter]'],['ถอนหายใจ','[sigh]'],['ตอบรับ · อังกฤษ','[confirmation-en]'],['ไม่พอใจ · hnn','[dissatisfaction-hnn]']]},
+ {label:'เสียงคำถาม',items:[['คำถาม · อังกฤษ','[question-en]'],['คำถาม · ah','[question-ah]'],['คำถาม · oh','[question-oh]'],['คำถาม · ei','[question-ei]'],['คำถาม · yi','[question-yi]']]},
+ {label:'เสียงประหลาดใจ',items:[['ประหลาดใจ · ah','[surprise-ah]'],['ประหลาดใจ · oh','[surprise-oh]'],['ประหลาดใจ · wa','[surprise-wa]'],['ประหลาดใจ · yo','[surprise-yo]']]}
+];
+const expressionMenu = expressionGroups.map(group => `<section class="expression-group"><h3>${group.label}</h3>${group.items.map(([label,tag]) => `<button type="button" data-tag="${tag}"><span>${label}</span><code>${tag}</code></button>`).join('')}</section>`).join('');
+const languageLabels = {Auto:'อัตโนมัติ',Thai:'ไทย',English:'อังกฤษ',Chinese:'จีน',Japanese:'ญี่ปุ่น',Korean:'เกาหลี',French:'ฝรั่งเศส',German:'เยอรมัน',Vietnamese:'เวียดนาม',Lao:'ลาว','Standard Arabic':'อาหรับมาตรฐาน'};
+const languageLabel = value => languageLabels[value] ? `${languageLabels[value]}${value === 'Auto' ? '' : ` · ${value}`}` : value;
+const defaults = () => ({whisper:false,pitch:'ปกติ',speed:1,pause:'0.3',language:'Auto'});
+let nextId = 4;
+let phrases = [
+ {id:1,text:'สวัสดีค่ะ ยินดีต้อนรับสู่เรื่องราวของเราในวันนี้',...defaults()},
+ {id:2,text:'บางครั้ง การเริ่มต้นใหม่ก็ง่ายกว่าที่เราคิด ลองค่อย ๆ ก้าวไปด้วยกันนะคะ',...defaults()},
+ {id:3,text:'พร้อมแล้วใช่ไหมคะ มาเริ่มกันเลย',...defaults(),pause:'0'}
+];
+let selectedId = 1, mode = 'clone', referenceFile = null, referenceUrl = null;
+const current = () => phrases.find(p => p.id === selectedId);
+const summary = p => `${languageLabel(p.language)} · ${p.whisper ? 'กระซิบ' : 'พูดปกติ'} · ระดับเสียง${p.pitch} · ${Number(p.speed).toFixed(1)}× · ${p.pause === '0' ? 'ไม่พักเพิ่ม' : `พัก ${p.pause} วินาที`}`;
+function changed(){ $('plan').hidden = true; $('review-error').textContent = ''; }
+function announce(text){ $('editor-status').textContent = text; }
+function updateSummary(p){ document.querySelector(`[data-summary="${p.id}"]`).textContent = summary(p); }
+function renderLanguages(){
+ const query = $('language-search').value.trim().toLocaleLowerCase('th-TH');
+ const selected = current().language;
+ const visible = languages.filter(value => value === 'Auto' || value === selected || `${value} ${languageLabel(value)}`.toLocaleLowerCase('th-TH').includes(query));
+ $('language').replaceChildren(...visible.map(value => new Option(languageLabel(value),value,false,value === selected)));
+ $('language-count').textContent = query ? `แสดง ${visible.length} ตัวเลือก รวมอัตโนมัติและค่าที่เลือก` : `${languages.length - 1} ภาษาเหมือน original พร้อมโหมดอัตโนมัติ`;
+}
+$('language-search').addEventListener('input',renderLanguages);
+function selectPhrase(id){
+ const previousId = selectedId;
+ selectedId = id;
+ document.querySelectorAll('.phrase').forEach(row => {
+  const active = Number(row.dataset.id) === id;
+  row.classList.toggle('selected',active);
+  row.querySelector('.phrase-select').setAttribute('aria-pressed',String(active));
+  row.querySelector('.selected-label').hidden = !active;
+ });
+ const p = current(), index = phrases.indexOf(p) + 1;
+ $('inspector-heading').textContent = `ตั้งค่าช่วงที่ ${index}`;
+ $('whisper').checked = p.whisper; $('pitch').value = p.pitch;
+ $('speed').value = p.speed; $('speed-value').value = `${Number(p.speed).toFixed(1)}×`; $('pause').value = p.pause;
+ if(previousId !== id || !$('language').options.length){$('language-search').value = ''; renderLanguages();}
+ $('language').value = p.language;
+ $('remove-block').disabled = phrases.length === 1;
+}
+function renderPhrases(){
+ $('blocks').replaceChildren();
+ phrases.forEach((p,index) => {
+  const row = document.createElement('section'); row.className = 'phrase'; row.dataset.id = p.id;
+  row.innerHTML = `<div class="phrase-header"><button type="button" class="phrase-select" aria-pressed="false">ช่วงที่ ${index+1}</button><span class="selected-label" hidden>กำลังแก้ไข</span><button type="button" class="phrase-settings" aria-label="ตั้งค่าช่วงที่ ${index+1}"><svg class="icon" aria-hidden="true"><use href="#settings"/></svg>ตั้งค่า</button></div><label class="sr-only" for="phrase-${p.id}">ข้อความช่วงที่ ${index+1}</label><div class="text-field"><textarea id="phrase-${p.id}" rows="2" spellcheck="false" dir="auto"></textarea><div class="field-tools"><details><summary>แทรกเสียงที่เคอร์เซอร์ · 13 แบบ</summary><p class="help">เลือกจุดในข้อความ แล้วเลือกเสียงที่ต้องการ แท็กเหล่านี้เป็นเสียงประกอบ ไม่ใช่อารมณ์รายคำ</p><div class="expression-list">${expressionMenu}</div></details></div></div><p class="phrase-summary" data-summary="${p.id}"></p>`;
+  const area = row.querySelector('textarea'); area.value = p.text;
+  area.addEventListener('focus',() => selectPhrase(p.id));
+  area.addEventListener('input',() => {p.text = area.value; changed();});
+  row.querySelector('button').addEventListener('click',() => {selectPhrase(p.id); area.focus();});
+  row.querySelector('summary').addEventListener('click',() => selectPhrase(p.id));
+  row.querySelector('.phrase-settings').addEventListener('click',() => {
+   selectPhrase(p.id); $('language-search').focus();
+  });
+  row.querySelectorAll('[data-tag]').forEach(button => button.addEventListener('click',() => {
+   selectPhrase(p.id);
+   const start = area.selectionStart, tag = button.dataset.tag;
+   const insert = (start && !/\s/.test(area.value[start-1]) ? ' ' : '') + tag + (start < area.value.length && !/\s/.test(area.value[start]) ? ' ' : '');
+   area.setRangeText(insert,start,start,'end'); p.text = area.value; row.querySelector('details').open = false; area.focus(); changed(); announce(`แทรก ${tag} ในช่วงที่ ${index+1} แล้ว`);
+  }));
+  $('blocks').append(row); updateSummary(p);
+ });
+ $('block-count').textContent = `${phrases.length} ช่วงเสียง`; selectPhrase(selectedId);
+}
+$('return-to-script').addEventListener('click',() => $(`phrase-${selectedId}`).focus());
+if(window.matchMedia('(max-width:700px)').matches) $('voice-settings').open = false;
+$('add-block').addEventListener('click',() => {
+ const p = {id:nextId++,text:'',...defaults()}; phrases.push(p); selectedId = p.id;
+ changed(); renderPhrases(); $(`phrase-${p.id}`).focus(); announce(`เพิ่มช่วงที่ ${phrases.length} แล้ว`);
+});
+$('remove-block').addEventListener('click',() => {
+ if(phrases.length === 1) return;
+ const index = phrases.findIndex(p => p.id === selectedId); phrases.splice(index,1);
+ selectedId = phrases[Math.min(index,phrases.length-1)].id; changed(); renderPhrases();
+ $(`phrase-${selectedId}`).focus(); announce('ลบช่วงที่เลือกแล้ว');
+});
+for(const name of ['whisper','pitch','speed','pause','language']){
+ $(name).addEventListener('input',() => {
+  const p = current(); p[name] = name === 'whisper' ? $(name).checked : name === 'speed' ? Number($(name).value) : $(name).value;
+  $('speed-value').value = `${Number(p.speed).toFixed(1)}×`; updateSummary(p); changed();
+ });
+}
+function setMode(value){
+ mode = value; $('clone-mode').setAttribute('aria-pressed',String(value === 'clone'));
+ $('design-mode').setAttribute('aria-pressed',String(value === 'design'));
+ $('clone-fields').hidden = value !== 'clone'; $('design-fields').hidden = value !== 'design'; changed();
+ if(value !== 'clone') $('reference-audio').pause();
+}
+$('clone-mode').addEventListener('click',() => setMode('clone'));
+$('design-mode').addEventListener('click',() => setMode('design'));
+$('voice-gender').addEventListener('change',changed);
+$('reference-text').addEventListener('input',changed);
+function clearReference(resetInput = true){
+ const audio = $('reference-audio'); audio.pause(); audio.removeAttribute('src'); audio.load();
+ if(referenceUrl) URL.revokeObjectURL(referenceUrl);
+ referenceUrl = null; referenceFile = null; if(resetInput) $('reference-file').value = ''; $('reference-preview').hidden = true;
+ $('file-status').classList.remove('error'); $('file-status').textContent = 'ยังไม่ได้เลือกไฟล์'; changed();
+}
+$('clear-file').addEventListener('click',() => clearReference());
+$('reference-file').addEventListener('change',() => {
+ const file = $('reference-file').files[0]; if(!file) return;
+ clearReference(false);
+ if(!file.type.startsWith('audio/') && !/\.(wav|mp3|m4a|ogg|flac|aac|webm|opus)$/i.test(file.name)){
+  $('file-status').classList.add('error'); $('file-status').textContent = 'ไฟล์นี้ไม่ใช่ไฟล์เสียง กรุณาเลือก WAV, MP3 หรือไฟล์เสียงอื่น'; return;
+ }
+ referenceFile = file; referenceUrl = URL.createObjectURL(file);
+ $('reference-meta').textContent = `${file.name} · ${(file.size/1024/1024).toLocaleString('th-TH',{maximumFractionDigits:2})} MB`;
+ $('reference-audio').src = referenceUrl; $('reference-preview').hidden = false;
+ $('file-status').textContent = 'เลือกไฟล์แล้ว · ฟังเพื่อตรวจสอบเสียงต้นฉบับ';
+});
+$('reference-audio').addEventListener('loadedmetadata',() => {
+ if(referenceFile && Number.isFinite($('reference-audio').duration)) $('reference-meta').textContent = `${referenceFile.name} · ${$('reference-audio').duration.toLocaleString('th-TH',{maximumFractionDigits:1})} วินาที · ${(referenceFile.size/1024/1024).toLocaleString('th-TH',{maximumFractionDigits:2})} MB`;
+});
+$('reference-audio').addEventListener('error',() => {
+ if(!referenceFile) return;
+ $('file-status').classList.add('error'); $('file-status').textContent = 'เบราว์เซอร์เล่นไฟล์นี้ไม่ได้ ลองแปลงเป็น WAV หรือ MP3 แล้วเลือกใหม่';
+});
+$('check-mic').addEventListener('click',async () => {
+ const status = $('mic-status'), button = $('check-mic'); status.classList.remove('error');
+ if(!window.isSecureContext){status.classList.add('error'); status.textContent = 'ตรวจไมค์ไม่ได้ในบริบทที่ไม่ปลอดภัย เปิดผ่าน HTTPS หรือ localhost แล้วลองอีกครั้ง'; return;}
+ if(!navigator.mediaDevices?.getUserMedia){status.classList.add('error'); status.textContent = 'เบราว์เซอร์นี้ไม่รองรับการเข้าถึงไมค์ ลอง Chrome, Edge หรือ Firefox รุ่นล่าสุด และตรวจสิทธิ์ไมค์ของระบบ'; return;}
+ button.disabled = true; status.textContent = 'กำลังขอสิทธิ์ตรวจไมค์ โปรดตอบคำขอของเบราว์เซอร์…';
+ try{
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  stream.getTracks().forEach(track => track.stop());
+  status.textContent = 'พบไมค์และได้รับสิทธิ์แล้ว · ปิดไมค์เรียบร้อย ไม่ได้บันทึกเสียง';
+ }catch(error){
+  status.classList.add('error');
+  const messages = {
+   NotFoundError:'ไม่พบไมโครโฟน (NotFoundError) เชื่อมต่อไมค์ เปิดใช้งานอุปกรณ์ในระบบ แล้วลองอีกครั้ง',
+   DevicesNotFoundError:'ไม่พบไมโครโฟน เชื่อมต่อไมค์และตรวจอุปกรณ์รับเสียงในระบบ',
+   NotAllowedError:'ยังไม่ได้รับสิทธิ์ใช้ไมค์ (NotAllowedError) อนุญาตไมค์ในการตั้งค่าเว็บไซต์และการตั้งค่าความเป็นส่วนตัวของระบบ แล้วลองใหม่',
+   PermissionDeniedError:'ถูกปฏิเสธสิทธิ์ไมค์ อนุญาตไมค์ให้เว็บไซต์และเบราว์เซอร์ในการตั้งค่าระบบ',
+   NotReadableError:'เปิดไมค์ไม่ได้ (NotReadableError) ปิดแอปอื่นที่ใช้ไมค์ ตรวจการเชื่อมต่อ แล้วลองอีกครั้ง',
+   SecurityError:'เบราว์เซอร์บล็อกการเข้าถึงไมค์ (SecurityError) ตรวจนโยบายความปลอดภัยและสิทธิ์ของเว็บไซต์',
+   AbortError:'การตรวจไมค์ถูกยกเลิก (AbortError) ตรวจการเชื่อมต่ออุปกรณ์แล้วลองใหม่'
+  };
+  status.textContent = messages[error.name] || `ตรวจไมค์ไม่สำเร็จ (${error.name || 'ข้อผิดพลาดไม่ทราบชนิด'}) ตรวจสิทธิ์และอุปกรณ์รับเสียง แล้วลองอีกครั้ง`;
+ }finally{button.disabled = false;}
+});
+$('review').addEventListener('click',() => {
+ changed();
+ const empty = phrases.find(p => !p.text.trim());
+ if(empty){
+  $('review-error').textContent = `ช่วงที่ ${phrases.indexOf(empty)+1} ยังไม่มีข้อความ กรุณาพิมพ์บทพูดหรือลบช่วงนี้`;
+  selectPhrase(empty.id); $(`phrase-${empty.id}`).focus(); return;
+ }
+ if(mode === 'clone' && !referenceFile){
+  $('review-error').textContent = 'ยังไม่มีเสียงอ้างอิง เลือกไฟล์เสียงทางแผง “เสียงที่ใช้” หรือเปลี่ยนเป็น “ออกแบบเสียง”';
+  $('voice-settings').open = true; $('reference-file').focus(); return;
+ }
+ if(mode === 'clone' && $('reference-audio').error){
+  $('review-error').textContent = 'ไฟล์อ้างอิงเล่นไม่ได้ กรุณาเลือกไฟล์ที่เบราว์เซอร์เปิดได้ก่อนตรวจแผน'; $('reference-file').focus(); return;
+ }
+ $('plan-voice').textContent = mode === 'clone' ? `เสียงอ้างอิง: ${referenceFile.name} · ${$('reference-text').value.trim() ? 'ใช้ข้อความในคลิปที่กรอกไว้' : 'ยังไม่กรอกข้อความในคลิป — แอปจริงต้องจัดการการถอดเสียงอัตโนมัติ'}` : `ออกแบบเสียง: ${$('voice-gender').value}`;
+ $('plan-blocks').replaceChildren();
+ phrases.forEach(p => {
+  const item = document.createElement('li'); item.append(document.createTextNode(p.text));
+  const detail = document.createElement('small'); detail.textContent = summary(p); item.append(detail); $('plan-blocks').append(item);
+ });
+ $('plan').hidden = false; $('plan').focus(); announce('แสดงแผนแล้ว ยังไม่ได้สร้างเสียงและไม่ได้ส่งข้อมูลออกจากเครื่อง');
+});
+window.addEventListener('pagehide',() => {if(referenceUrl) URL.revokeObjectURL(referenceUrl);});
+renderPhrases();
+</script>
+</body>
+</html>
